@@ -4,6 +4,8 @@
 
 A modern Ninite-like web application for Windows that allows users to select multiple apps and generates a single installer script using Microsoft Winget.
 
+![QuickSetup Pro Screenshot](public/screenshot.png)
+
 ## Features
 
 - ✨ **Clean, Modern UI** - Beautiful interface with app icons and categories
@@ -33,10 +35,10 @@ quicksetup-pro/
 │   ├── services/          # API services
 │   ├── types/             # TypeScript types
 │   └── App.tsx            # Main app component
-├── server/                # Backend Node.js server
+├── api/                    # Backend API (Vercel Functions)
 │   ├── routes/            # API routes
 │   ├── services/          # Business logic
-│   └── index.ts           # Server entry point
+│   └── main.ts            # API entry point
 └── public/                # Static assets
 ```
 
@@ -84,8 +86,8 @@ npm run build
 
 - `GET /api/apps` - Get all available apps
 - `GET /api/apps/:id` - Get specific app details
-- `POST /api/generate-script` - Generate installation script
-- `POST /api/ai-recommend` - Get AI-recommended apps
+- `POST /api/script/generate` - Generate installation script
+- `POST /api/ai/recommend` - Get AI-recommended apps
 
 ## Security
 
