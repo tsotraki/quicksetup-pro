@@ -168,7 +168,7 @@ set "failed=0"
 
 `;
 
-    apps.forEach((app, index) => {
+    apps.forEach((app, _index) => {
         script += `set /a current+=1
 echo [!current!/!total!] ${app.name}
 echo     Package ID: ${app.wingetId}

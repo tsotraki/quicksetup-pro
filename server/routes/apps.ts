@@ -87,7 +87,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // Get categories (MUST be before /:id to avoid route matching issues)
-router.get('/meta/categories', (req: Request, res: Response) => {
+router.get('/meta/categories', (_req: Request, res: Response) => {
     const categories = [
         { id: 'popular', name: 'Popular', icon: 'Star', count: 0 },
         { id: 'basics', name: 'Basics', icon: 'Globe', count: 0 },
@@ -105,7 +105,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
 
     try {
-        const wingetInfo = await getWingetPackageInfo(id);
+        const wingetInfo = await getWingetPackageInfo(id || '');
         if (!wingetInfo) {
             return res.status(404).json({ error: 'App not found' });
         }

@@ -17,12 +17,12 @@ app.use('/api/script', scriptRouter);
 app.use('/api/ai', aiRouter);
 
 // Health check
-app.get('/api/health', (req: Request, res: Response) => {
+app.get('/api/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: any) => {
+app.use((err: Error, _req: Request, res: Response, _next: any) => {
     console.error('Error:', err);
     res.status(500).json({ error: 'Internal server error', message: err.message });
 });
