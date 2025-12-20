@@ -1,5 +1,7 @@
 # QuickSetup Pro 🚀
 
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://tsotraki.github.io/quicksetup-pro/)
+
 A modern Ninite-like web application for Windows that allows users to select multiple apps and generates a single installer script using Microsoft Winget.
 
 ## Features
