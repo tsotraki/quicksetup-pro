@@ -40,13 +40,11 @@ app.use((err: Error, _req: Request, res: Response, _next: any) => {
     res.status(500).json({ error: 'Internal server error', message: err.message });
 });
 
-// Only start server if not in Vercel serverless environment
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    app.listen(PORT, () => {
-        console.log(`🚀 QuickSetup Pro server running on http://localhost:${PORT}`);
-        console.log(`📦 API available at http://localhost:${PORT}/api `);
-    });
-}
+// Start server
+app.listen(PORT, () => {
+    console.log(`🚀 QuickSetup Pro server running on port ${PORT}`);
+    console.log(`📦 API available at /api`);
+});
 
-// Export for Vercel
+// Export for compatibility
 export default app;
