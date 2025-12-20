@@ -1,7 +1,6 @@
 import express, { Request, Response } from 'express';
 
-import { getWingetPackageInfo, searchPackages, getPopularPackages } from '../services/winget';
-
+import { getWingetPackageInfo, searchPackages, getPopularPackages } from '../services/winget.js';
 const router = express.Router();
 
 // Get all apps (with pagination and search)

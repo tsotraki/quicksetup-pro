@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { generatePowerShellScript, generateBatchScript } from '../services/scriptGenerator';
+import { generatePowerShellScript, generateBatchScript } from '../services/scriptGenerator.js';
 
 
 const router = express.Router();

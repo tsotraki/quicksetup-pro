@@ -1,8 +1,8 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
-import appsRouter from './routes/apps';
-import scriptRouter from './routes/script';
-import aiRouter from './routes/ai';
+import appsRouter from './routes/apps.js';
+import scriptRouter from './routes/script.js';
+import aiRouter from './routes/ai.js';
 
 const app: Express = express();
 const PORT = process.env.PORT || 3001;

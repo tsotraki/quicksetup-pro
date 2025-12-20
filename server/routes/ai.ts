@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { getAIRecommendations } from '../services/aiRecommendations';
+import { getAIRecommendations } from '../services/aiRecommendations.js';
 
 const router = express.Router();
 
