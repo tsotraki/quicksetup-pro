@@ -6,10 +6,9 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "vite",
-    "dev:server": "nodemon --watch api --ext ts --exec tsx api/index.ts",
+    "dev:server": "tsx api/index.ts",
     "build": "npm run build:client",
     "build:client": "tsc -b tsconfig.app.json && vite build",
-    "build:server": "tsc -p server/tsconfig.json",
     "lint": "eslint .",
     "preview": "vite preview"
   },
