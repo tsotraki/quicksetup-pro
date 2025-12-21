@@ -249,16 +249,7 @@ function AppComponent() {
     setSelectedApps(new Map());
   };
 
-  if (error) {
-    return (
-      <div className="error-container">
-        <Package size={64} />
-        <h2>Connection Error</h2>
-        <p>{error}</p>
-        <p className="error-hint">Start the backend server with: <code>npm run dev</code></p>
-      </div>
-    );
-  }
+  // No early return for error - handled inside the main content area
 
   // Calculate counts of selected apps per category
   const categoriesWithCounts = useMemo(() => {
@@ -378,7 +369,20 @@ function AppComponent() {
           />
 
           {/* Apps Grid */}
-          {isLoading ? (
+          {error ? (
+            <div className="error-container">
+              <Package size={64} />
+              <h2 className="text-2xl font-bold mt-4">Connection Error</h2>
+              <p className="text-gray-400 mt-2">{error}</p>
+              <button
+                className="btn btn-primary mt-6"
+                onClick={() => { setError(null); loadApps(true); }}
+              >
+                <Zap size={18} />
+                Try Again
+              </button>
+            </div>
+          ) : isLoading ? (
             <div className="loading-container">
               <div className="spinner"></div>
               <p>Loading apps...</p>
