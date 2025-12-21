@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { App, Category, ScriptResponse, AIRecommendationResponse } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://quicksetup-pro-production.up.railway.app/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export const api = {
     // Get all apps with optional filters and pagination
