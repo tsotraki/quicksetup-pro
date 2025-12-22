@@ -12,8 +12,8 @@ import './App.css';
 function AppComponent() {
   const [apps, setApps] = useState<App[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  // Use Map to store full App objects, keyed by ID
-  const [selectedApps, setSelectedApps] = useState<Map<string, App>>(new Map());
+  // Store app along with the category/tab it was selected from
+  const [selectedApps, setSelectedApps] = useState<Map<string, { app: App; selectedFromCategory: string | null }>>(new Map());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -120,14 +120,15 @@ function AppComponent() {
   }, [hasMore, isLoading, skip]);
 
 
-  // Updated toggle logic to handle full App objects
+  // Updated toggle logic to track which category the app was selected from
   const toggleApp = (app: App) => {
     setSelectedApps(prev => {
       const newMap = new Map(prev);
       if (newMap.has(app.id)) {
         newMap.delete(app.id);
       } else {
-        newMap.set(app.id, app);
+        // Store app along with the category it was selected from
+        newMap.set(app.id, { app, selectedFromCategory: selectedCategory });
       }
       return newMap;
     });
@@ -146,10 +147,10 @@ function AppComponent() {
       setIsAILoading(true);
       const response = await api.getAIRecommendations(prompt);
 
-      // Select all recommended apps
+      // Select all recommended apps (no specific category context)
       const newSelections = new Map(selectedApps);
       response.recommendations.forEach(app => {
-        newSelections.set(app.id, app);
+        newSelections.set(app.id, { app, selectedFromCategory: null });
       });
       setSelectedApps(newSelections);
 
@@ -175,7 +176,7 @@ function AppComponent() {
     try {
       setIsGenerating(true);
       // Convert Map values to array for API
-      const chosenApps = Array.from(selectedApps.values()).map(app => ({
+      const chosenApps = Array.from(selectedApps.values()).map(({ app }) => ({
         id: app.id,
         name: app.name,
         wingetId: app.wingetId
@@ -231,7 +232,7 @@ function AppComponent() {
       setSelectedApps(prev => {
         const newMap = new Map(prev);
         popularApps.forEach(app => {
-          newMap.set(app.id, app);
+          newMap.set(app.id, { app, selectedFromCategory: 'popular' });
         });
         return newMap;
       });
@@ -251,16 +252,19 @@ function AppComponent() {
 
   // No early return for error - handled inside the main content area
 
-  // Calculate counts of selected apps per category
+  // Calculate counts - only count apps selected from each specific category
   const categoriesWithCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    selectedApps.forEach(app => {
-      // Count for primary category
-      counts[app.category] = (counts[app.category] || 0) + 1;
-
-      // Count for popular category
-      if (app.popular) {
-        counts['popular'] = (counts['popular'] || 0) + 1;
+    selectedApps.forEach(({ app, selectedFromCategory }) => {
+      // Only count if app was selected from a specific category
+      if (selectedFromCategory) {
+        counts[selectedFromCategory] = (counts[selectedFromCategory] || 0) + 1;
+      } else {
+        // Fallback: if no selectedFromCategory (e.g., from AI recommendations), count in actual category
+        counts[app.category] = (counts[app.category] || 0) + 1;
+        if (app.popular) {
+          counts['popular'] = (counts['popular'] || 0) + 1;
+        }
       }
     });
 
@@ -465,7 +469,7 @@ function AppComponent() {
 
       {/* Selected Apps Modal */}
       <SelectedAppsModal
-        apps={Array.from(selectedApps.values())}
+        apps={Array.from(selectedApps.values()).map(({ app }) => app)}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onRemove={removeApp}
