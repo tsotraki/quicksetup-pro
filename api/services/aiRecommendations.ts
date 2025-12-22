@@ -30,7 +30,9 @@ const knownApps: Record<string, App> = {
     'zoom': { id: 'zoom', name: 'Zoom', wingetId: 'Zoom.Zoom', category: 'basics', description: 'Video conferencing', icon: 'Video', popular: true, tags: ['meeting'] },
     'slack': { id: 'slack', name: 'Slack', wingetId: 'SlackTechnologies.Slack', category: 'basics', description: 'Team collaboration', icon: 'Hash', popular: false, tags: ['chat'] },
     'powertoys': { id: 'powertoys', name: 'PowerToys', wingetId: 'Microsoft.PowerToys', category: 'utilities', description: 'System utilities', icon: 'Zap', popular: true, tags: ['utility'] },
-    '7zip': { id: '7zip', name: '7-Zip', wingetId: '7zip.7zip', category: 'utilities', description: 'File archiver', icon: 'FileArchive', popular: true, tags: ['zip'] },
+    '7zip': { id: '7zip', name: '7-Zip', wingetId: '7zip.7zip', category: 'utilities', description: 'File archiver', icon: 'FileArchive', popular: true, tags: ['zip', 'compress', 'archive'] },
+    'winrar': { id: 'winrar', name: 'WinRAR', wingetId: 'RARLab.WinRAR', category: 'utilities', description: 'Archive manager', icon: 'FileArchive', popular: true, tags: ['rar', 'zip', 'compress', 'archive'] },
+    'peazip': { id: 'peazip', name: 'PeaZip', wingetId: 'Giorgiotani.Peazip', category: 'utilities', description: 'Free archive manager', icon: 'FileArchive', popular: false, tags: ['zip', 'compress', 'archive'] },
     'everything': { id: 'everything', name: 'Everything', wingetId: 'voidtools.Everything', category: 'utilities', description: 'File search', icon: 'Search', popular: true, tags: ['search'] },
     'dotnet': { id: 'dotnet', name: '.NET Desktop Runtime', wingetId: 'Microsoft.DotNet.DesktopRuntime.8', category: 'runtime', description: '.NET Runtime', icon: 'Package', popular: false, tags: ['runtime'] },
     'spotify': { id: 'spotify', name: 'Spotify', wingetId: 'Spotify.Spotify', category: 'media', description: 'Music streaming', icon: 'Music', popular: true, tags: ['music'] }
@@ -129,6 +131,13 @@ export async function getAIRecommendations(prompt: string): Promise<App[]> {
         addApp('spotify');
         addApp('vlc');
         addApp('audacity');
+    }
+
+    // Compression/Archive tools
+    if (promptLower.match(/compress|zip|archive|extract|rar|unzip|7z/)) {
+        addApp('7zip');
+        addApp('winrar');
+        addApp('peazip');
     }
 
     // Always include essential runtimes if any apps are recommended
