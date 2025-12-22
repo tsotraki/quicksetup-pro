@@ -29,6 +29,11 @@ router.get('/', async (req: Request, res: Response) => {
                 case 'media': searchQuery = 'video audio music player image photo stream codec'; break;
                 case 'runtime': searchQuery = 'runtime framework redistributable library driver directx'; break;
                 case 'utilities': searchQuery = 'utility tool archive compress file system utility'; break;
+                case 'gaming': searchQuery = 'game gaming steam epic gog launcher platform'; break;
+                case 'design': searchQuery = 'design graphic photo editor creative adobe sketch'; break;
+                case 'productivity': searchQuery = 'office productivity document spreadsheet note calendar'; break;
+                case 'security': searchQuery = 'security antivirus firewall vpn password encryption'; break;
+                case 'network': searchQuery = 'network ftp ssh remote server download torrent'; break;
             }
         }
 
@@ -81,6 +86,11 @@ router.get('/meta/categories', (_req: Request, res: Response) => {
         { id: 'utilities', name: 'Utilities', icon: 'Wrench', count: 0 },
         { id: 'developer', name: 'Developer', icon: 'Code', count: 0 },
         { id: 'media', name: 'Media', icon: 'PlayCircle', count: 0 },
+        { id: 'gaming', name: 'Gaming', icon: 'Gamepad2', count: 0 },
+        { id: 'design', name: 'Design', icon: 'Palette', count: 0 },
+        { id: 'productivity', name: 'Productivity', icon: 'Briefcase', count: 0 },
+        { id: 'security', name: 'Security', icon: 'Shield', count: 0 },
+        { id: 'network', name: 'Network', icon: 'Network', count: 0 },
         { id: 'runtime', name: 'Runtime', icon: 'Cpu', count: 0 }
     ];
 

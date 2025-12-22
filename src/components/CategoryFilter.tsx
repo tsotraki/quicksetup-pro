@@ -14,31 +14,56 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
     selectedCategory,
     onSelectCategory
 }) => {
+    // Separate "Popular" from other categories
+    const popularCategory = categories.find(cat => cat.id === 'popular');
+    const otherCategories = categories.filter(cat => cat.id !== 'popular');
+
     return (
-        <div className="category-filter">
-            <button
-                className={`category-btn ${selectedCategory === null ? 'active' : ''}`}
-                onClick={() => onSelectCategory(null)}
-            >
-                <Icons.Grid3x3 size={20} />
-                <span>All Apps</span>
-            </button>
+        <div className="category-filter-container">
+            {/* Main Tabs Row: All Apps & Popular */}
+            <div className="main-tabs">
+                <button
+                    className={`main-tab ${selectedCategory === null ? 'active' : ''}`}
+                    onClick={() => onSelectCategory(null)}
+                >
+                    <Icons.Grid3x3 size={22} />
+                    <span>All Apps</span>
+                </button>
 
-            {categories.map(category => {
-                const IconComponent = (Icons as any)[category.icon] || Icons.Package;
-
-                return (
+                {popularCategory && (
                     <button
-                        key={category.id}
-                        className={`category-btn ${selectedCategory === category.id ? 'active' : ''}`}
-                        onClick={() => onSelectCategory(category.id)}
+                        className={`main-tab ${selectedCategory === 'popular' ? 'active' : ''}`}
+                        onClick={() => onSelectCategory('popular')}
                     >
-                        <IconComponent size={20} />
-                        <span>{category.name}</span>
-                        <span className="count">{category.count}</span>
+                        <Icons.Zap size={22} />
+                        <span>Popular</span>
+                        {popularCategory.count > 0 && (
+                            <span className="count">{popularCategory.count}</span>
+                        )}
                     </button>
-                );
-            })}
+                )}
+            </div>
+
+            {/* Category Tabs Row */}
+            <div className="category-tabs">
+                {otherCategories.map(category => {
+                    const IconComponent = (Icons as any)[category.icon] || Icons.Package;
+
+                    return (
+                        <button
+                            key={category.id}
+                            className={`category-btn ${selectedCategory === category.id ? 'active' : ''}`}
+                            onClick={() => onSelectCategory(category.id)}
+                        >
+                            <IconComponent size={18} />
+                            <span>{category.name}</span>
+                            {category.count > 0 && (
+                                <span className="count">{category.count}</span>
+                            )}
+                        </button>
+                    );
+                })}
+            </div>
         </div>
     );
 };

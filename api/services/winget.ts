@@ -240,11 +240,16 @@ function getIconForCategory(category: string): string {
         case 'developer': return 'Code';
         case 'media': return 'PlayCircle';
         case 'runtime': return 'Cpu';
+        case 'gaming': return 'Gamepad2';
+        case 'design': return 'Palette';
+        case 'productivity': return 'Briefcase';
+        case 'security': return 'Shield';
+        case 'network': return 'Network';
         default: return 'Package';
     }
 }
 
-function determineCategory(pkg: any): 'basics' | 'utilities' | 'developer' | 'media' | 'runtime' {
+function determineCategory(pkg: any): 'basics' | 'utilities' | 'developer' | 'media' | 'runtime' | 'gaming' | 'design' | 'productivity' | 'security' | 'network' {
     const text = [
         pkg.Id, pkg.Name, pkg.Latest?.Name, pkg.Description,
         pkg.Latest?.Description, ...(pkg.Tags || []), ...(pkg.Latest?.Tags || [])
@@ -254,9 +259,22 @@ function determineCategory(pkg: any): 'basics' | 'utilities' | 'developer' | 'me
         developer: ['code', 'ide', 'git', 'sdk', 'program', 'node', 'python', 'java', 'compiler', 'debug', 'studio', 'vs', 'develop', 'powershell', 'terminal', 'editor', 'postman', 'docker'],
         media: ['video', 'audio', 'music', 'player', 'image', 'photo', 'stream', 'spotify', 'vlc', 'obs', 'ffmpeg', 'gimp', 'paint', 'codec'],
         basics: ['browser', 'chat', 'communicat', 'message', 'social', 'web', 'chrome', 'firefox', 'edge', 'discord', 'slack', 'zoom', 'telegram', 'whatsapp', 'vpn'],
-        runtime: ['runtime', 'framework', 'redistributable', 'library', 'driver', 'directx', 'vcredist', '.net', 'jdk', 'jre', 'opengl', 'vc++']
+        runtime: ['runtime', 'framework', 'redistributable', 'library', 'driver', 'directx', 'vcredist', '.net', 'jdk', 'jre', 'opengl', 'vc++'],
+        gaming: ['game', 'gaming', 'steam', 'epic', 'gog', 'launcher', 'xbox', 'playstation', 'origin', 'ubisoft', 'blizzard', 'riot'],
+        design: ['design', 'graphic', 'photo editor', 'creative', 'adobe', 'sketch', 'figma', 'illustrator', 'photoshop', 'inkscape', 'krita', 'blender'],
+        productivity: ['office', 'productivity', 'document', 'spreadsheet', 'note', 'calendar', 'outlook', 'word', 'excel', 'onenote', 'notion', 'trello', 'asana'],
+        security: ['security', 'antivirus', 'firewall', 'password', 'encryption', 'malware', 'kaspersky', 'norton', 'mcafee', 'bitdefender', 'avast'],
+        network: ['network', 'ftp', 'ssh', 'remote', 'server', 'download', 'torrent', 'putty', 'filezilla', 'winscp', 'vnc', 'rdp', 'teamviewer']
     };
 
+    // Check new categories first for better prioritization
+    if (patterns.gaming.some(k => text.includes(k))) return 'gaming';
+    if (patterns.design.some(k => text.includes(k))) return 'design';
+    if (patterns.productivity.some(k => text.includes(k))) return 'productivity';
+    if (patterns.security.some(k => text.includes(k))) return 'security';
+    if (patterns.network.some(k => text.includes(k))) return 'network';
+
+    // Then check existing categories
     if (patterns.developer.some(k => text.includes(k))) return 'developer';
     if (patterns.media.some(k => text.includes(k))) return 'media';
     if (patterns.basics.some(k => text.includes(k))) return 'basics';
