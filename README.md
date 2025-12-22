@@ -96,6 +96,24 @@ npm run build
 - No third-party or modified installers
 - Open-source and transparent
 
+## AI Recommendations
+
+The AI recommendation feature uses intelligent keyword matching to suggest relevant apps. Supported categories include:
+
+- **Development**: developer, coding, programming, web dev, python, etc.
+- **Gaming**: gaming, stream, twitch, etc.
+- **Media**: content creation, video edit, photo edit, etc.
+- **Compression**: compress, zip, archive, extract, rar, unzip
+- **Office**: productivity, work, business, office
+- **Music**: music, audio, spotify
+- **Communication**: chat, video call, meeting
+
+**Example prompts:**
+- "compress" → Suggests 7-Zip, WinRAR, PeaZip
+- "web developer" → Suggests VS Code, Git, Node.js, Chrome, Postman
+- "gaming setup" → Suggests Steam, Discord, OBS, DirectX
+
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
