@@ -1,34 +1,45 @@
-# Test AI Recommendations Feature
+# Test AI Recommendations Feature - Intelligent Search
 
-## Test Compression Tools
-Write-Host "Testing AI Recommendations for 'compress'..."
-$response = Invoke-RestMethod -Uri "https://quicksetup-pro-production.up.railway.app/api/ai/recommend" `
-    -Method POST `
-    -ContentType "application/json" `
-    -Body '{"prompt":"compress"}'
+Write-Host "=== Testing AI Recommendations with Intelligent Search ===" -ForegroundColor Cyan
+Write-Host "Now works with ANY keyword!`n" -ForegroundColor Green
 
-Write-Host "`nPrompt: $($response.prompt)"
-Write-Host "Count: $($response.count)`n"
-
-if ($response.recommendations) {
-    Write-Host "Recommended Apps:"
-    foreach ($app in $response.recommendations) {
-        Write-Host "  - $($app.name) ($($app.wingetId))"
-    }
-} else {
-    Write-Host "No recommendations found!"
-}
-
-Write-Host "`n---`n"
-
-## Test Other Keywords
-$testPrompts = @("zip", "archive", "extract", "developer", "gaming", "music")
+$testPrompts = @(
+    "compress",
+    "browser",
+    "video editor", 
+    "python",
+    "game",
+    "photo",
+    "music",
+    "pdf",
+    "terminal",
+    "torrent"
+)
 
 foreach ($prompt in $testPrompts) {
-    Write-Host "Testing '$prompt'..."
-    $r = Invoke-RestMethod -Uri "https://quicksetup-pro-production.up.railway.app/api/ai/recommend" `
-        -Method POST `
-        -ContentType "application/json" `
-        -Body "{`"prompt`":`"$prompt`"}"
-    Write-Host "  → $($r.count) apps recommended`n"
+    Write-Host "Testing: '$prompt'" -ForegroundColor Yellow
+    
+    try {
+        $response = Invoke-RestMethod -Uri "https://quicksetup-pro-production.up.railway.app/api/ai/recommend" `
+            -Method POST `
+            -ContentType "application/json" `
+            -Body "{`"prompt`":`"$prompt`"}"
+        
+        Write-Host "  ✓ Found $($response.count) apps" -ForegroundColor Green
+        
+        if ($response.recommendations -and $response.count -gt 0) {
+            $response.recommendations | Select-Object -First 3 | ForEach-Object {
+                Write-Host "    - $($_.name)" -ForegroundColor Gray
+            }
+            if ($response.count -gt 3) {
+                Write-Host "    ... and $($response.count - 3) more" -ForegroundColor DarkGray
+            }
+        }
+    } catch {
+        Write-Host "  ✗ Error: $_" -ForegroundColor Red
+    }
+    
+    Write-Host ""
 }
+
+Write-Host "`n=== All tests completed ===" -ForegroundColor Cyan
