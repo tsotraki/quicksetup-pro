@@ -98,20 +98,28 @@ npm run build
 
 ## AI Recommendations
 
-The AI recommendation feature uses intelligent keyword matching to suggest relevant apps. Supported categories include:
+The AI recommendation feature uses **intelligent search** to find relevant apps for any keyword. It searches the entire Winget repository and scores results based on:
 
-- **Development**: developer, coding, programming, web dev, python, etc.
-- **Gaming**: gaming, stream, twitch, etc.
-- **Media**: content creation, video edit, photo edit, etc.
-- **Compression**: compress, zip, archive, extract, rar, unzip
-- **Office**: productivity, work, business, office
-- **Music**: music, audio, spotify
-- **Communication**: chat, video call, meeting
+- **Name matching** - Exact or partial matches in app names
+- **WingetId matching** - Matches in package identifiers  
+- **Tags** - Relevant tags associated with the app
+- **Description** - Keywords in app descriptions
+- **Popularity** - Slight boost for popular apps
 
-**Example prompts:**
-- "compress" → Suggests 7-Zip, WinRAR, PeaZip
-- "web developer" → Suggests VS Code, Git, Node.js, Chrome, Postman
-- "gaming setup" → Suggests Steam, Discord, OBS, DirectX
+**How it works:**
+1. Type any keyword (e.g., "browser", "compress", "photo editor", "game")
+2. The system searches thousands of Winget packages
+3. Results are ranked by relevance
+4. Top 8 most relevant apps are selected automatically
+
+**Example searches:**
+- "compress" → 7-Zip, WinRAR, PeaZip, etc.
+- "browser" → Chrome, Firefox, Edge, Brave, etc.
+- "video editor" → DaVinci Resolve, Shotcut, HandBrake, etc.
+- "python" → Python, VS Code, PyCharm, etc.
+- "game" → Steam, Epic Games, GOG Galaxy, etc.
+
+**Works with ANY keyword!** Just describe what you need and the AI will find relevant apps.
 
 
 ## Contributing
