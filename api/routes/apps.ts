@@ -21,57 +21,45 @@ router.get('/', async (req: Request, res: Response) => {
             return res.json(results);
         }
 
-        // If no explicit search but category is selected, map category to relevant search terms
+        // Determine search query based on category
         if (!searchQuery && category) {
             switch (category) {
-                case 'basics': searchQuery = 'browser chat'; break;
-                case 'developer': searchQuery = 'develop ide git'; break;
-                case 'media': searchQuery = 'video audio player'; break;
-                case 'runtime': searchQuery = 'runtime redistributable'; break;
-                case 'utilities': searchQuery = 'utility tool'; break;
+                case 'basics': searchQuery = 'browser communication social vpn chat message'; break;
+                case 'developer': searchQuery = 'code ide editor git sdk program develop terminal'; break;
+                case 'media': searchQuery = 'video audio music player image photo stream codec'; break;
+                case 'runtime': searchQuery = 'runtime framework redistributable library driver directx'; break;
+                case 'utilities': searchQuery = 'utility tool archive compress file system utility'; break;
             }
         }
 
-        // If we have a search query (explicit or from category) or we want to fetch more than the initial static set
+        // Search for packages
         if (searchQuery || skipNum > 0) {
             console.log(`Searching Winget: query="${searchQuery}", category="${category || 'all'}", take=${takeNum}, skip=${skipNum}`);
-            const results = await searchPackages(searchQuery, takeNum, skipNum);
+
+            // Fetch more results to allow for filtering
+            const fetchCount = category && category !== 'popular' ? takeNum * 3 : takeNum;
+            const results = await searchPackages(searchQuery, fetchCount, skipNum);
             console.log(`Winget search returned ${results.length} results`);
 
-            // Force category consistency for search results derived from category filters
-            if (category && category !== 'popular' && results.length > 0) {
-                results.forEach((app: any) => {
-                    const validCategories = ['basics', 'utilities', 'developer', 'media', 'runtime'];
-                    if (validCategories.includes(category as string)) {
-                        app.category = category;
-                    }
-                });
+            // Filter by actual category if a category is selected
+            let filteredResults = results;
+            if (category && category !== 'popular') {
+                filteredResults = results.filter((app: any) => app.category === category);
+                console.log(`Filtered to ${filteredResults.length} apps in category "${category}"`);
             }
 
-            return res.json(results);
+            // Return requested number of results
+            const finalResults = filteredResults.slice(0, takeNum);
+            return res.json(finalResults);
         }
 
-        // Fallback/Initial view
+
+        // Fallback/Initial view (no category, no search)
         console.log('Initial load: fetching from Winget...');
         const results = await searchPackages('', takeNum, skipNum);
         console.log(`Initial Winget fetch returned ${results.length} results`);
 
-        // Force category consistency: if the user explicitly asked for a category (and we mapped it to a search),
-        // ensure the results belong to that category visually.
-        // This prevents the issue where searching for "Basics" returns an app classified as "Utilities",
-        // causing the "Utilities" tab counter to increment instead of "Basics".
-        if (category && category !== 'popular' && results.length > 0) {
-            results.forEach((app: any) => {
-                // Determine if the requested category is one of the valid App categories
-                const validCategories = ['basics', 'utilities', 'developer', 'media', 'runtime'];
-                if (validCategories.includes(category as string)) {
-                    app.category = category;
-                }
-            });
-        }
-
-
-        // If Winget fails or returns empty for empty search, return empty (don't fallback to static)
+        // If Winget fails or returns empty, return empty array
         if (results.length === 0 && skipNum === 0) {
             console.log('Winget returned empty');
             return res.json([]);
