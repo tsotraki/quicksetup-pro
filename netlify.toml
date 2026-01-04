@@ -1,0 +1,38 @@
+# Netlify Configuration for QuickSetup Pro, 2026-01-04T14:35:00+02:00
+# Full-stack deployment: Frontend + API Functions
+
+[build]
+  # Build command for the frontend
+  command = "npm ci && npm run build:client && npm run build:functions"
+  # Output directory for the static frontend
+  publish = "dist"
+  # Directory containing Netlify Functions
+  functions = "netlify/functions"
+
+[build.environment]
+  # Node.js version
+  NODE_VERSION = "20"
+
+# Redirect API calls to Netlify Functions
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+
+# SPA fallback - serve index.html for all routes
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for better caching and security
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

@@ -2,149 +2,130 @@
 
 ## Overview
 
-This project uses a split deployment strategy:
-- **Frontend**: GitHub Pages (via GitHub Actions)
-- **Backend**: Railway
+This project uses **Netlify** for full-stack deployment:
+- **Frontend**: Static React/Vite app
+- **Backend**: Netlify Functions (serverless)
+
+Everything deploys automatically when you push to the `main` branch!
 
 ## Configuration
 
 ### Environment Variables
 
-The frontend needs to know where the backend API is located. This is configured via the `VITE_API_URL` environment variable.
+The frontend uses a relative API path that works seamlessly with Netlify's redirect configuration.
 
 **Files:**
-- `.env.production` - Production API URL (Railway)
+- `.env.production` - Production API URL (`/api`)
 - `.env.example` - Template for local development
 - `.env` (gitignored) - Your local development settings
 
 ### Current Setup
 
-- **Production API:** `https://quicksetup-pro-production.up.railway.app/api`
-- **Local API:** `http://localhost:3001/api`
+- **Production**: Deployed to Netlify (auto-configured via `netlify.toml`)
+- **Local API**: `http://localhost:3001/api`
 
 ## Deployment Process
 
-### Deploying Frontend (GitHub Pages)
+### Initial Setup (First Time Only)
 
-1. Commit and push changes to the `main` branch
-2. GitHub Actions will automatically:
-   - Install dependencies
-   - Build with production API URL
-   - Deploy to GitHub Pages
+1. **Create Netlify Account**: Go to [netlify.com](https://netlify.com) and sign up (free)
 
-**Manual deployment:**
+2. **Connect Repository**:
+   - Click "Add new site" → "Import an existing project"
+   - Choose GitHub and select your repository
+   - Netlify will auto-detect settings from `netlify.toml`
+
+3. **Deploy**: Netlify will automatically build and deploy!
+
+### Subsequent Deployments
+
+Just push to `main` branch:
 ```bash
 git add .
 git commit -m "Your commit message"
 git push origin main
 ```
 
-The deployment status can be monitored at:
-https://github.com/YOUR_USERNAME/quicksetup-pro/actions
+Netlify automatically:
+- Detects the push
+- Runs `npm ci && npm run build`
+- Deploys frontend to CDN
+- Deploys functions to serverless
 
-### Deploying Backend (Railway)
+### Manual Deployment
 
-Railway automatically deploys when you push to the connected branch.
-
-**To redeploy manually:**
-1. Go to Railway dashboard
-2. Select your project
-3. Click "Deploy" or push changes to trigger deployment
+From Netlify dashboard:
+1. Go to your site
+2. Click "Deploys" tab
+3. Click "Trigger deploy" → "Deploy site"
 
 ## Testing Deployment
 
-### Test Backend Health
+### Test API Health
 ```bash
-curl https://quicksetup-pro-production.up.railway.app/api/health
+curl https://YOUR-SITE.netlify.app/api/health
 ```
 
 Expected response:
 ```json
-{"status":"ok","timestamp":"2025-12-22T..."}
+{"status":"ok","timestamp":"2026-01-04T..."}
 ```
 
-### Test Backend API
+### Test App Search
 ```bash
-curl "https://quicksetup-pro-production.up.railway.app/api/apps?take=1"
+curl "https://YOUR-SITE.netlify.app/api/apps?take=1"
 ```
 
 Should return app data.
 
 ### Test Frontend
-Visit your GitHub Pages URL and check:
+Visit your Netlify URL and check:
 - Apps load correctly
 - No console errors about failed API requests
-- Network tab shows requests going to Railway backend
+- Search works
+- Categories display properly
 
 ## Troubleshooting
 
-### Frontend can't connect to backend
+### API Returns 404
 
 **Symptoms:**
-- "Connection Error" message
-- "Failed to load apps. Make sure the backend server is running."
+- `/api/...` requests fail with 404
 
 **Solutions:**
+1. **Check function logs**: Netlify Dashboard → Functions → View logs
+2. **Verify build**: Check if `netlify/functions/api.js` exists after build
+3. **Check redirects**: Ensure `netlify.toml` has correct redirect rules
 
-1. **Check if backend is running:**
-   ```bash
-   curl https://quicksetup-pro-production.up.railway.app/api/health
-   ```
+### Frontend Not Loading
 
-2. **Verify GitHub Actions used correct API URL:**
-   - Check latest workflow run logs
-   - Look for the build step
-   - Confirm `VITE_API_URL` environment variable was set
+**Symptoms:**
+- Blank page or 404
 
-3. **Check for CORS issues:**
-   - Open browser DevTools → Network tab
-   - Look for failed requests
-   - Check if CORS headers are present
+**Solutions:**
+1. **Check build output**: Verify `dist/` folder contains `index.html`
+2. **Check deploy logs**: Netlify Dashboard → Deploys → View log
 
-4. **Redeploy frontend:**
-   - Make a small change (e.g., add comment to README)
-   - Push to main branch
-   - Wait for GitHub Actions to complete
+### CORS Issues
 
-### Backend not responding
+**Symptoms:**
+- "CORS policy" errors in browser console
 
-1. **Check Railway logs:**
-   - Go to Railway dashboard
-   - View deployment logs
-   - Look for errors
+**Solutions:**
+The API function includes CORS headers. If issues persist:
+1. Check browser Network tab for actual error
+2. Verify the API is returning correct headers
 
-2. **Check Railway service status:**
-   - Verify service is not sleeping
-   - Check resource usage
+### Slow Cold Starts
 
-3. **Verify environment variables in Railway:**
-   - `PORT` should be set (Railway provides this)
-   - Node.js version matches package.json
-
-## Updating API URL
-
-If you change the Railway deployment URL:
-
-1. Update `.env.production`:
-   ```
-   VITE_API_URL=https://new-url.railway.app/api
-   ```
-
-2. Update `.github/workflows/deploy.yml`:
-   ```yaml
-   - name: Build
-     run: npm run build:client
-     env:
-       VITE_API_URL: https://new-url.railway.app/api
-   ```
-
-3. Commit and push changes
+Functions may have a cold start on first request after inactivity.
+This is normal for serverless - subsequent requests will be fast.
 
 ## Local Development
 
 For local development:
 
-1. Create `.env` file (gitignored):
+1. Create `.env` file:
    ```bash
    cp .env.example .env
    ```
@@ -158,9 +139,34 @@ This starts:
 - Frontend: http://localhost:5173
 - Backend: http://localhost:3001
 
+## Project Structure
+
+```
+quicksetup-pro/
+├── netlify/
+│   └── functions/
+│       ├── api.ts          # Main serverless API function
+│       └── tsconfig.json   # TypeScript config for functions
+├── netlify.toml            # Netlify configuration
+├── src/                    # Frontend React app
+├── api/                    # Original Express backend (for local dev)
+└── dist/                   # Built frontend (generated)
+```
+
 ## Important Notes
 
-- **Environment variables are embedded at build time** in Vite apps
-- Changing `.env.production` requires a new build and deployment
-- The GitHub Actions workflow explicitly sets `VITE_API_URL` during build
-- Backend CORS is configured to accept requests from any origin
+- **API Path**: Frontend uses `/api` which Netlify redirects to `/.netlify/functions/api`
+- **Auto-deploy**: Every push to `main` triggers a new deployment
+- **Free tier**: Includes 100GB bandwidth/month and 125K function invocations
+- **Build time**: ~2-3 minutes for full deployment
+
+## Netlify Dashboard
+
+Your deployment dashboard is at:
+`https://app.netlify.com/sites/YOUR-SITE-NAME`
+
+Here you can:
+- View deploy logs
+- Check function invocations
+- Set environment variables
+- Configure custom domains

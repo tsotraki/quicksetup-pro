@@ -30,3 +30,6 @@ node_modules/
 .env.local
 .env.*.local
 *.docx
+
+# Netlify Functions (compiled at build time)
+netlify/functions/*.js

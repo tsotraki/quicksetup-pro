@@ -8,8 +8,9 @@
     "dev:client": "vite",
     "dev:server": "tsx api/main.ts",
     "start": "tsx api/main.ts",
-    "build": "npm run build:client",
+    "build": "npm run build:client && npm run build:functions",
     "build:client": "tsc -b tsconfig.app.json && vite build",
+    "build:functions": "tsc -p netlify/functions/tsconfig.json",
     "lint": "eslint .",
     "preview": "vite preview"
   },
