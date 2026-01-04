@@ -4,5 +4,5 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/quicksetup-pro/',
+  base: '/',  // Root path for Netlify (was '/quicksetup-pro/' for GitHub Pages)
 })

@@ -7,5 +7,9 @@ name: Deploy to GitHub Pages (DISABLED)
 on:
   workflow_dispatch:
 
-# This workflow is disabled. Netlify handles all deployments now.
-# See DEPLOYMENT.md for current deployment instructions.
+jobs:
+  disabled:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notice
+        run: echo "This workflow is disabled. Netlify handles deployments now."
