@@ -1,7 +1,8 @@
 // QuickSetup Pro - Netlify Serverless API Function
 // Handles all /api/* routes
+// Using Netlify Functions v1 format for compatibility
 
-import axios from 'axios';
+import type { Handler, HandlerEvent, HandlerContext, HandlerResponse } from "@netlify/functions";
 
 // ============================================
 // TYPES
@@ -125,6 +126,17 @@ function determineCategory(pkg: any): string {
     return 'utilities';
 }
 
+async function fetchJson(url: string, options: any = {}): Promise<any> {
+    const response = await fetch(url, {
+        headers: API_HEADERS,
+        ...options
+    });
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+    return response.json();
+}
+
 async function getWingetPackageInfo(packageId: string): Promise<App | null> {
     try {
         let pkg = null;
@@ -132,35 +144,26 @@ async function getWingetPackageInfo(packageId: string): Promise<App | null> {
         // Strategy 1: Direct ID lookup
         try {
             const url = `https://api.winget.run/v2/packages/${encodeURIComponent(packageId)}`;
-            const response = await axios.get(url, {
-                headers: API_HEADERS,
-                timeout: 5000,
-                validateStatus: (status) => status !== 429
-            });
+            const data = await fetchJson(url);
 
-            if (response.data?.Packages?.length > 0) {
-                const exactMatch = response.data.Packages.find((p: any) =>
+            if (data?.Packages?.length > 0) {
+                const exactMatch = data.Packages.find((p: any) =>
                     p.Id.toLowerCase() === packageId.toLowerCase()
                 );
                 if (exactMatch) pkg = exactMatch;
             }
         } catch (error: any) {
-            if (error.response?.status === 429) {
-                console.warn(`[Winget] Rate limit hit for ${packageId}`);
-            }
+            console.warn(`[Winget] Direct lookup failed for ${packageId}`);
         }
 
         // Strategy 2: Search with Custom Queries
         if (!pkg) {
             try {
                 const query = CUSTOM_QUERIES[packageId] || packageId;
-                const searchResponse = await axios.get('https://api.winget.run/v2/packages', {
-                    params: { query, take: 5 },
-                    headers: API_HEADERS,
-                    timeout: 5000
-                });
+                const searchUrl = `https://api.winget.run/v2/packages?query=${encodeURIComponent(query)}&take=5`;
+                const data = await fetchJson(searchUrl);
 
-                const candidates = searchResponse.data.Packages || [];
+                const candidates = data.Packages || [];
                 pkg = candidates.find((c: any) => c.Id.toLowerCase() === packageId.toLowerCase());
             } catch (e) {
                 console.error(`[Winget] Fallback search failed for ${packageId}`);
@@ -224,13 +227,10 @@ async function searchPackages(query: string = '', take: number = 12, skip: numbe
 
         // Standard search
         const searchQuery = query || 'app';
-        const response = await axios.get('https://api.winget.run/v2/packages', {
-            params: { take, skip, query: searchQuery },
-            headers: API_HEADERS,
-            timeout: 5000
-        });
+        const url = `https://api.winget.run/v2/packages?query=${encodeURIComponent(searchQuery)}&take=${take}&skip=${skip}`;
+        const data = await fetchJson(url);
 
-        const packages = response.data.Packages || [];
+        const packages = data.Packages || [];
 
         return packages.map((pkg: any) => {
             const category = determineCategory(pkg);
@@ -505,21 +505,89 @@ async function getAIRecommendations(prompt: string): Promise<App[]> {
 }
 
 // ============================================
-// ROUTE HANDLERS
+// HELPERS
 // ============================================
-type RouteHandler = (event: any) => Promise<Response>;
-
-const routes: Record<string, Record<string, RouteHandler>> = {
-    GET: {
-        '/health': async () => {
-            return jsonResponse({ status: 'ok', timestamp: new Date().toISOString() });
+function jsonResponse(data: any, statusCode: number = 200): HandlerResponse {
+    return {
+        statusCode,
+        headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type'
         },
-        '/apps': async (event) => {
-            const url = new URL(event.rawUrl);
-            const search = url.searchParams.get('search') || '';
-            const category = url.searchParams.get('category') || '';
-            const take = parseInt(url.searchParams.get('take') || '12');
-            const skip = parseInt(url.searchParams.get('skip') || '0');
+        body: JSON.stringify(data)
+    };
+}
+
+// ============================================
+// MAIN HANDLER
+// ============================================
+const handler: Handler = async (event: HandlerEvent, _context: HandlerContext): Promise<HandlerResponse> => {
+    const method = event.httpMethod;
+
+    // Handle CORS preflight
+    if (method === 'OPTIONS') {
+        return {
+            statusCode: 204,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            },
+            body: ''
+        };
+    }
+
+    // Parse path from the URL - remove /api prefix if present
+    let path = event.path
+        .replace(/^\/.netlify\/functions\/api/, '')  // Remove Netlify function prefix
+        .replace(/^\/api/, '');                       // Remove /api prefix
+
+    if (!path) path = '/';
+
+    console.log(`[API] ${method} ${path}`);
+
+    try {
+        // GET /health
+        if (method === 'GET' && path === '/health') {
+            return jsonResponse({ status: 'ok', timestamp: new Date().toISOString() });
+        }
+
+        // GET /apps/meta/categories
+        if (method === 'GET' && path === '/apps/meta/categories') {
+            return jsonResponse(CATEGORIES);
+        }
+
+        // GET /apps/:id
+        if (method === 'GET' && path.startsWith('/apps/') && !path.includes('/meta/')) {
+            const id = path.replace('/apps/', '');
+            const wingetInfo = await getWingetPackageInfo(id);
+
+            if (!wingetInfo) {
+                return jsonResponse({ error: 'App not found' }, 404);
+            }
+
+            return jsonResponse({
+                ...wingetInfo,
+                id,
+                name: wingetInfo.name || id,
+                wingetId: id,
+                category: wingetInfo.category || 'utilities',
+                description: wingetInfo.description || 'Fetched from Winget',
+                icon: wingetInfo.icon || 'Package',
+                popular: wingetInfo.popular || false,
+                tags: wingetInfo.tags || []
+            });
+        }
+
+        // GET /apps
+        if (method === 'GET' && path === '/apps') {
+            const params = event.queryStringParameters || {};
+            const search = params.search || '';
+            const category = params.category || '';
+            const take = parseInt(params.take || '12');
+            const skip = parseInt(params.skip || '0');
 
             // Popular category
             if (category === 'popular' && !search) {
@@ -560,143 +628,57 @@ const routes: Record<string, Record<string, RouteHandler>> = {
             // Default: initial load
             const results = await searchPackages('', take, skip);
             return jsonResponse(results);
-        },
-        '/apps/meta/categories': async () => {
-            return jsonResponse(CATEGORIES);
         }
-    },
-    POST: {
-        '/script/generate': async (event) => {
-            try {
-                const body = JSON.parse(event.body || '{}');
-                const { apps: selectedApps, format = 'ps1' } = body;
 
-                if (!selectedApps || !Array.isArray(selectedApps) || selectedApps.length === 0) {
-                    return jsonResponse({ error: 'No apps selected' }, 400);
-                }
+        // POST /script/generate
+        if (method === 'POST' && path === '/script/generate') {
+            const body = JSON.parse(event.body || '{}');
+            const { apps: selectedApps, format = 'ps1' } = body;
 
-                const script = format === 'bat'
-                    ? generateBatchScript(selectedApps)
-                    : generatePowerShellScript(selectedApps);
-
-                return jsonResponse({
-                    script,
-                    appCount: selectedApps.length,
-                    apps: selectedApps.map((app: any) => ({
-                        id: app.id,
-                        name: app.name,
-                        wingetId: app.wingetId
-                    }))
-                });
-            } catch (error) {
-                console.error('Script generation error:', error);
-                return jsonResponse({ error: 'Failed to generate script' }, 500);
+            if (!selectedApps || !Array.isArray(selectedApps) || selectedApps.length === 0) {
+                return jsonResponse({ error: 'No apps selected' }, 400);
             }
-        },
-        '/ai/recommend': async (event) => {
-            try {
-                const body = JSON.parse(event.body || '{}');
-                const { prompt } = body;
 
-                if (!prompt || typeof prompt !== 'string') {
-                    return jsonResponse({ error: 'Prompt is required' }, 400);
-                }
+            const script = format === 'bat'
+                ? generateBatchScript(selectedApps)
+                : generatePowerShellScript(selectedApps);
 
-                const recommendations = await getAIRecommendations(prompt);
+            return jsonResponse({
+                script,
+                appCount: selectedApps.length,
+                apps: selectedApps.map((app: any) => ({
+                    id: app.id,
+                    name: app.name,
+                    wingetId: app.wingetId
+                }))
+            });
+        }
 
-                return jsonResponse({
-                    prompt,
-                    recommendations,
-                    count: recommendations.length
-                });
-            } catch (error) {
-                console.error('AI recommendation error:', error);
-                return jsonResponse({ error: 'Failed to get recommendations' }, 500);
+        // POST /ai/recommend
+        if (method === 'POST' && path === '/ai/recommend') {
+            const body = JSON.parse(event.body || '{}');
+            const { prompt } = body;
+
+            if (!prompt || typeof prompt !== 'string') {
+                return jsonResponse({ error: 'Prompt is required' }, 400);
             }
-        }
-    }
-};
 
-// ============================================
-// HELPERS
-// ============================================
-function jsonResponse(data: any, status: number = 200): Response {
-    return new Response(JSON.stringify(data), {
-        status,
-        headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type'
-        }
-    });
-}
+            const recommendations = await getAIRecommendations(prompt);
 
-// ============================================
-// MAIN HANDLER
-// ============================================
-export default async function handler(event: any) {
-    const method = event.httpMethod;
-
-    // Handle CORS preflight
-    if (method === 'OPTIONS') {
-        return new Response(null, {
-            status: 204,
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type'
-            }
-        });
-    }
-
-    // Parse path from the URL - remove /api prefix if present
-    const url = new URL(event.rawUrl);
-    let path = url.pathname
-        .replace(/^\/.netlify\/functions\/api/, '')  // Remove Netlify function prefix
-        .replace(/^\/api/, '');                       // Remove /api prefix
-
-    if (!path) path = '/';
-
-    console.log(`[API] ${method} ${path}`);
-
-    // Handle /apps/:id route
-    if (method === 'GET' && path.startsWith('/apps/') && !path.includes('/meta/')) {
-        const id = path.replace('/apps/', '');
-        const wingetInfo = await getWingetPackageInfo(id);
-
-        if (!wingetInfo) {
-            return jsonResponse({ error: 'App not found' }, 404);
+            return jsonResponse({
+                prompt,
+                recommendations,
+                count: recommendations.length
+            });
         }
 
-        return jsonResponse({
-            ...wingetInfo,
-            id,
-            name: wingetInfo.name || id,
-            wingetId: id,
-            category: wingetInfo.category || 'utilities',
-            description: wingetInfo.description || 'Fetched from Winget',
-            icon: wingetInfo.icon || 'Package',
-            popular: wingetInfo.popular || false,
-            tags: wingetInfo.tags || []
-        });
-    }
-
-    // Find route handler
-    const methodRoutes = routes[method];
-    if (!methodRoutes) {
-        return jsonResponse({ error: 'Method not allowed' }, 405);
-    }
-
-    const handler = methodRoutes[path];
-    if (!handler) {
+        // Not found
         return jsonResponse({ error: 'Not found', path }, 404);
-    }
 
-    try {
-        return await handler(event);
     } catch (error) {
         console.error('Handler error:', error);
         return jsonResponse({ error: 'Internal server error' }, 500);
     }
-}
+};
+
+export { handler };

@@ -2,9 +2,10 @@
     "compilerOptions": {
         "target": "ES2022",
         "module": "ES2022",
-        "moduleResolution": "bundler",
+        "moduleResolution": "node",
         "lib": [
-            "ES2022"
+            "ES2022",
+            "DOM"
         ],
         "outDir": ".",
         "rootDir": ".",
@@ -14,7 +15,8 @@
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
         "declaration": false,
-        "noEmit": false
+        "noEmit": false,
+        "isolatedModules": true
     },
     "include": [
         "*.ts"
